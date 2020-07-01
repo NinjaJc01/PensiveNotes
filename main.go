@@ -183,9 +183,9 @@ func doLogin(w http.ResponseWriter, r *http.Request) {
 		return //error!
 	}
 	//give them a session token in return and TELL THEM it worked
-	w.Write([]byte(user.SessionToken))
 	http.SetCookie(w, &http.Cookie{Name: "SessionToken", Value: user.SessionToken, Path: "/"})
-	http.Redirect(w, r, "/mynotes", 303)
+	//http.Redirect(w, r, "/mynotes", 303)
+	w.Write([]byte(user.SessionToken))
 }
 
 func createUser(w http.ResponseWriter, r *http.Request) { //
@@ -394,13 +394,12 @@ func dbUserVerifyToken(token string) (User, string) {
 		var (
 			UserID       int
 			Username     string
-			Realname     string
 			PasswordHash string
 			Salt         string
 			SessionToken string
 		)
 
-		err = res.Scan(&UserID, &Username, &Realname, &PasswordHash, &Salt, &SessionToken)
+		err = res.Scan(&UserID, &Username, &PasswordHash, &Salt, &SessionToken)
 		if err != nil {
 			res.Close()
 			log.Println(err.Error())
@@ -438,13 +437,12 @@ func dbUserGetByUsername(username string) (User, string) {
 		var (
 			UserID       int
 			Username     string
-			Realname     string
 			PasswordHash string
 			Salt         string
 			SessionToken string
 		)
 
-		err = res.Scan(&UserID, &Username, &Realname, &PasswordHash, &Salt, &SessionToken)
+		err = res.Scan(&UserID, &Username, &PasswordHash, &Salt, &SessionToken)
 		if err != nil {
 			res.Close()
 			log.Println(err.Error())
