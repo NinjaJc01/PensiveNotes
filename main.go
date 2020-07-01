@@ -376,13 +376,13 @@ func dbUserSetToken(token string, userID int) string {
 	return "success"
 }
 
-func dbUserSetPassword(token string, userID int) string {
-	statement, err := database.Prepare("UPDATE User SET SessionToken = ? WHERE UserID = ?")
+func dbUserSetPassword(newHash string, userID int) string {
+	statement, err := database.Prepare("UPDATE User SET HashedPassword = ? WHERE UserID = ?")
 	if err != nil {
 		log.Println(err.Error())
 		return "DB statement preperation failed"
 	}
-	_, err = statement.Exec(token, userID)
+	_, err = statement.Exec(newHash, userID)
 	if err != nil {
 		log.Println(err.Error())
 		return "DB execution failed"
