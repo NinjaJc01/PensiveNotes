@@ -1,5 +1,10 @@
 package main
-
+//TODO
+/*
+- Implement Password Change Handler
+- Write frontend
+- Create database to ship with PensiveNotes
+*/
 import (
 	"crypto/rand"
 	"crypto/sha512"
@@ -29,6 +34,13 @@ type User struct {
 type UserReq struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
+}
+
+//UserReqPWChange is the format of a password change request
+type UserReqPWChange struct {
+	Username string `json:"username"`
+	CurrentPassword string `json:"currentPassword"`
+	NewPassword string `json:"newPassword"`
 }
 
 //Note represents the structure of a note in the database
@@ -84,15 +96,15 @@ func startServer() {
 	mr.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("./resources"))))
 	//CRUD API routes
 	userRouter := apiRouter.PathPrefix("/user").Subrouter()
-	///*A route		*/ userRouter.HandleFunc("/create", createUser).Methods("POST")
-	/*Log out	*/
-	userRouter.HandleFunc("/logout", doLogout).Methods("POST")
-	/*Log In	*/ userRouter.HandleFunc("/login", doLogin).Methods("POST")
+	/*Create User	*/ userRouter.HandleFunc("/create", createUser).Methods("POST")
+	/*Create User	*/ userRouter.HandleFunc("/changepw", reqHandler).Methods("POST") //TODO implement this
+	/*Log out		*/ userRouter.HandleFunc("/logout", doLogout).Methods("POST")
+	/*Log In		*/ userRouter.HandleFunc("/login", doLogin).Methods("POST")
 	noteRouter := apiRouter.PathPrefix("/note").Subrouter()
 	/*Create		*/ noteRouter.HandleFunc("/new", createNote).Methods("POST")
 	/*List by user	*/ noteRouter.HandleFunc("/list", listNotesForUser).Methods("GET")
 	/*Read one		*/ noteRouter.HandleFunc("/{id}", readNote).Methods("GET")
-	log.Println("Listening for requests")
+	log.Println("Listening for requests on",fmt.Sprintf(":%v", port))
 	http.ListenAndServe(fmt.Sprintf(":%v", port), mr)
 }
 
@@ -145,65 +157,35 @@ func doLogout(w http.ResponseWriter, r *http.Request) {
 }
 
 func doLogin(w http.ResponseWriter, r *http.Request) {
-	var (
-		username string
-		password string
-	)
-	contentType := r.Header.Get("Content-Type")
-	if contentType == "application/json" {
-		type Login struct {
-			Username string `json:"username"`
-			Password string `json:"password"`
-		}
-		var creds Login
-		body, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			w.WriteHeader(500)
-			return
-		}
-		err = json.Unmarshal(body, &creds)
-		if creds.Username != "" && creds.Password != "" {
-			username = creds.Username
-			password = creds.Password
-		} else {
-			// Malformed request
-			w.WriteHeader(400)
-			return
-		}
-	} else if contentType == "application/x-www-form-urlencoded" {
-		username = r.FormValue("username")
-		password = r.FormValue("password")
-	} else {
-		log.Println(contentType)
-		w.WriteHeader(415)
+	username := r.FormValue("username")
+	password := r.FormValue("password")
+	if username == "" || password == "" {
+		w.WriteHeader(400)
+		w.Write([]byte("Incorrect credentials"))
 		return
 	}
-
 	//Verify user and password
 	user, status := dbUserGetByUsername(username)
 	//on success, set cookie and send them to the flag
 	if status != "success" {
 		hashPassword("nottherealpassword", "aSalt")
-		http.SetCookie(w, &http.Cookie{Name: "Status", Value: "Invalid Username Or Password", Path: "/"})
-		http.Redirect(w, r, "/admin", 303)
-
+		w.Write([]byte("Incorrect credentials"))
 		return //error!
 	}
 	if !verifyPass(user, password) {
-		http.SetCookie(w, &http.Cookie{Name: "Status", Value: "Invalid Username Or Password", Path: "/"})
-		http.Redirect(w, r, "/admin", 303)
+		w.Write([]byte("Incorrect credentials"))
 		return //error!
 	}
 	user.SessionToken = generateToken()
 	status = dbUserSetToken(user.SessionToken, user.UserID)
 	if status != "success" {
-		http.SetCookie(w, &http.Cookie{Name: "Status", Value: "Failed to set session token", Path: "/"})
-		http.Redirect(w, r, "/admin", 303)
+		w.Write([]byte("An unspecified error occurred"))
 		return //error!
 	}
 	//give them a session token in return and TELL THEM it worked
+	w.Write([]byte(user.SessionToken))
 	http.SetCookie(w, &http.Cookie{Name: "SessionToken", Value: user.SessionToken, Path: "/"})
-	http.Redirect(w, r, "/flag", 303)
+	http.Redirect(w, r, "/mynotes", 303)
 }
 
 func createUser(w http.ResponseWriter, r *http.Request) { //
