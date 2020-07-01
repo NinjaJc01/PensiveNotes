@@ -1,0 +1,119 @@
+:root {
+    --base03:   #002b36;
+    --base02:   #073642;
+    --base01:   #586e75;
+    --base00:   #657b83;
+    --base0:    #839496;
+    --base1:    #93a1a1;
+    --base2:    #eee8d5;
+    --base3:    #fdf6e3;
+    --yellow:   #b58900;
+    --orange:   #cb4b16;
+    --red:      #dc322f;
+    --magenta:  #d33682;
+    --violet:   #6c71c4;
+    --blue:     #268bd2;
+    --cyan:     #2aa198;
+    --green:    #859900;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+}
+body.dark {
+    color: var(--base00);
+    background: var(--base03);
+}
+body.light {
+    color: var(--base0);
+    background: var(--base3);
+}
+
+h3 {
+    margin: 0;
+}
+
+
+nav {
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+nav.dark {
+    background: var(--base02);
+}
+nav.light {
+    background: var(--base2);
+}
+
+nav a {
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 2rem;
+    font-weight: bold;
+}
+
+.bodyFlexContainer {
+    margin-top: 1rem;
+    display: flex;
+}
+
+.bodyFlexContainer p {
+    margin-left: 1rem;
+}
+
+.current {
+    text-decoration: underline;
+}
+
+.logo {
+    margin-right: 0.5rem;
+    color: inherit;
+    height: 2.5rem;
+}
+
+.column {
+    margin: 1rem;
+}
+
+.subtitle {
+    margin: 0;
+}
+.subtitle.dark {
+    color: var(--base01)
+}
+.subtitle.light {
+    color: var(--base1)
+}
+
+.content {
+    padding: 0 0.5rem;
+}
+
+.pageHeading {
+    margin: 1rem 0 0 0;
+}
+
+.navTitle {
+    margin: 0;
+    display: inline-flex;
+    flex: auto;
+    justify-content: space-between;
+}
+
+.navTitle a {
+    display: inline;
+    padding: 0;
+}
+
+.aboutTitle {
+    margin: 0.5rem 0;
+}
+
+.aboutText {
+    margin: 0.25rem 0;
+}

@@ -1,14 +1,49 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Page Title</title>
+    <title>Pensive - Note taking app</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" type="text/css" media="screen" href="main.css">
-    <script src="main.js"></script>
+    <link rel="stylesheet" type="text/css" media="screen" href="/css/main.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="/css/login.css">
+    <link rel="icon" type="image/svg" href="/img/pensive.svg" />
+    <script src="/js/main.js"></script>
+    <script src="/js/theme.js"></script>
+    <script src="/js/cookie.js"></script>
+    <script src="/js/login.js"></script>
 </head>
-<body>
-    It works.
+
+<body class="dark" onload="themeOnload();onLoginLoad()">
+    <nav class="dark">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            class="feather feather-pen-tool logo">
+            <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
+            <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path>
+            <path d="M2 2l7.586 7.586"></path>
+            <circle cx="11" cy="11" r="2"></circle>
+        </svg>
+        <h2 class="navTitle"><a href="/">Pensive Notes</a></h2>
+        <a href="/mynotes">My Notes</a>
+    </nav>
+    <div class="bodyFlexContainer content">
+        <div class="column">
+            <h3>Pensive Notes</h3>
+            <h4 class="subtitle">A note taking app for people who like to think about their notes</h4>
+        </div>
+        <div class="column">
+            <h3>Log in to Pensive Notes</h3>
+            <form id="loginForm">
+                <div class="formElem"><label for="username">Username:</label><input id="username" name="username" required></div>
+                <div class="formElem"><label for="password">Password:</label><input id="password" name="password"
+                        type="password" required></div>
+                <button>Login</button>
+            </form>
+            <div id="loginStatus"></div>
+        </div>
+    </div>
 </body>
+
 </html>

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Pensive - Note taking app</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" media="screen" href="/css/main.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="/css/notes.css">
+    <link rel="icon" type="image/svg" href="/img/pensive.svg" />
+    <script src="/js/main.js"></script>
+    <script src="/js/theme.js"></script>
+    <script src="/js/notes.js"></script>
+    <!-- <script src="/js/cookie.js"></script> -->
+</head>
+
+<body class="dark" onload="themeOnload();getNotes()">
+    <nav class="dark">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round" class="feather feather-pen-tool logo">
+            <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
+            <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path>
+            <path d="M2 2l7.586 7.586"></path>
+            <circle cx="11" cy="11" r="2"></circle>
+        </svg>
+        <h2 class="navTitle"><a href="/">Pensive Notes</a></h2>
+        <a href="/mynotes">My Notes</a>
+    </nav>
+    <div class="content">
+        <h2 class="margin">Your notes:</h2>
+        <button id="newNote" onclick="noteDialog()">Create New Note</button>
+        <form id="notesForm" class="invisible">
+            <div class="formElem">
+                <input id="Title" placeholder="Title">
+            </div>
+            <div class="formElem">
+                <textarea id="Content" placeholder="Contents" type="text"></textarea>
+            </div>
+            <div class="formElem">
+                <button id="newNoteButton" type="button" onclick="createNote()">Create
+                    Note</button>
+                <button id="cancel" type="button" onclick="cancelNote()">Cancel</button>
+            </div>
+        </form>
+        <div id="notesDiv">
+        </div>
+    </div>
+</body>
+
+</html>
