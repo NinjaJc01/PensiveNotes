@@ -18,11 +18,11 @@ import (
 
 //User represents a user entity
 type User struct {
-	UserID         int
-	Username       string
+	UserID       int
+	Username     string
 	PasswordHash string
-	Salt           string
-	SessionToken   string
+	Salt         string
+	SessionToken string
 }
 
 //UserReq is the format of a user creation request
@@ -45,7 +45,6 @@ type NoteRequest struct {
 	Content      string `json:"noteContent"`
 	Title        string `json:"noteTitle"`
 }
-
 
 var database *sql.DB
 
@@ -86,7 +85,8 @@ func startServer() {
 	//CRUD API routes
 	userRouter := apiRouter.PathPrefix("/user").Subrouter()
 	///*A route		*/ userRouter.HandleFunc("/create", createUser).Methods("POST")
-	/*Log out	*/ userRouter.HandleFunc("/logout",doLogout).Methods("POST")
+	/*Log out	*/
+	userRouter.HandleFunc("/logout", doLogout).Methods("POST")
 	/*Log In	*/ userRouter.HandleFunc("/login", doLogin).Methods("POST")
 	noteRouter := apiRouter.PathPrefix("/note").Subrouter()
 	/*Create		*/ noteRouter.HandleFunc("/new", createNote).Methods("POST")
@@ -126,18 +126,18 @@ func userReqToUser(req UserReq) User {
 func doLogout(w http.ResponseWriter, r *http.Request) {
 	//determine user by cookie
 	token, err := r.Cookie("SessionToken")
-	http.SetCookie(w,&http.Cookie{Name: "SessionToken", Value: "", Path:"/"})
+	http.SetCookie(w, &http.Cookie{Name: "SessionToken", Value: "", Path: "/"})
 	if err != nil {
 		log.Println(err.Error())
 		w.WriteHeader(401) //No cookie, no auth
 		return
 	}
-	user, status := dbVerifyToken(token.Value)
+	user, status := dbUserVerifyToken(token.Value)
 	if status != "success" { //the user must be authenticated
 		w.WriteHeader(401)
 		return
 	}
-	status = dbSetToken("", user.UserID)
+	status = dbUserSetToken("", user.UserID)
 	if status != "success" {
 		w.WriteHeader(500)
 		return
@@ -158,9 +158,7 @@ func doLogin(w http.ResponseWriter, r *http.Request) {
 		var creds Login
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			//response["status"] = "Error parsing json"
 			w.WriteHeader(500)
-			//json.NewEncoder(w).Encode(response)
 			return
 		}
 		err = json.Unmarshal(body, &creds)
@@ -168,83 +166,77 @@ func doLogin(w http.ResponseWriter, r *http.Request) {
 			username = creds.Username
 			password = creds.Password
 		} else {
-			//malformed request
-			//response["status"] = "Wrong credential encoding"
+			// Malformed request
 			w.WriteHeader(400)
-			//json.NewEncoder(w).Encode(response)
 			return
 		}
 	} else if contentType == "application/x-www-form-urlencoded" {
 		username = r.FormValue("username")
 		password = r.FormValue("password")
 	} else {
-		//response["status"] = "Wrong credential encoding"
 		log.Println(contentType)
 		w.WriteHeader(415)
-		//json.NewEncoder(w).Encode(response)
 		return
 	}
-	//log.Println(username,password)
-	//w.Header().Set("Content-Type", "application/json")
+
 	//Verify user and password
-	user, status := dbGetUserByUsername(username)
+	user, status := dbUserGetByUsername(username)
 	//on success, set cookie and send them to the flag
 	if status != "success" {
-		hashPassword("nottherealpassword","aSalt")
-		hashPassword("nottherealpassword","aSalt")
-		http.SetCookie(w, &http.Cookie{Name: "Status", Value: "Invalid Username Or Password", Path:"/"})
-		http.Redirect(w,r,"/admin",303)
-		
+		hashPassword("nottherealpassword", "aSalt")
+		http.SetCookie(w, &http.Cookie{Name: "Status", Value: "Invalid Username Or Password", Path: "/"})
+		http.Redirect(w, r, "/admin", 303)
+
 		return //error!
 	}
-	if !verifyPass(user,password) {
-		http.SetCookie(w, &http.Cookie{Name: "Status", Value: "Invalid Username Or Password", Path:"/"})
-		http.Redirect(w,r,"/admin",303)
+	if !verifyPass(user, password) {
+		http.SetCookie(w, &http.Cookie{Name: "Status", Value: "Invalid Username Or Password", Path: "/"})
+		http.Redirect(w, r, "/admin", 303)
 		return //error!
 	}
 	user.SessionToken = generateToken()
-	status = dbSetToken(user.SessionToken, user.UserID)
+	status = dbUserSetToken(user.SessionToken, user.UserID)
 	if status != "success" {
-		http.SetCookie(w, &http.Cookie{Name: "Status", Value: "Failed to set session token", Path:"/"})
-		http.Redirect(w,r,"/admin",303)
+		http.SetCookie(w, &http.Cookie{Name: "Status", Value: "Failed to set session token", Path: "/"})
+		http.Redirect(w, r, "/admin", 303)
 		return //error!
 	}
 	//give them a session token in return and TELL THEM it worked
-	http.SetCookie(w, &http.Cookie{Name: "SessionToken", Value: user.SessionToken, Path:"/"})
-	http.Redirect(w,r,"/flag",303)
+	http.SetCookie(w, &http.Cookie{Name: "SessionToken", Value: user.SessionToken, Path: "/"})
+	http.Redirect(w, r, "/flag", 303)
 }
-//Functonality removed, as not needed for challenge
-// func createUser(w http.ResponseWriter, r *http.Request) { //
-// 	response := make(map[string]string)
-// 	var userReq UserReq
-// 	//Try to read JSON in, make sure it's correct
-// 	body, err := ioutil.ReadAll(r.Body)
-// 	if err != nil {
-// 		w.WriteHeader(500)
-// 		response["status"] = "Error creating user"
-// 		json.NewEncoder(w).Encode(response)
-// 		return
-// 	}
-// 	err = json.Unmarshal(body, &userReq)
-// 	if err != nil {
-// 		w.WriteHeader(400)
-// 		response["status"] = "Error parsing JSON"
-// 		json.NewEncoder(w).Encode(response)
-// 		log.Println(string(body),userReq)
-// 		return
-// 	}
-// 	newUser := userReqToUser(userReq)
-// 	status := dbCreateUser(newUser)
-// 	if status != "success" {
-// 		w.WriteHeader(500)
-// 		response["status"] = "Error creating user"
-// 		json.NewEncoder(w).Encode(response)
-// 		return
-// 	}
-// 	response["status"] = "success"
-// 	json.NewEncoder(w).Encode(response)
-// 	return
-// }
+
+func createUser(w http.ResponseWriter, r *http.Request) { //
+	response := make(map[string]string)
+	var userReq UserReq
+	//Try to read JSON in, make sure it's correct
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		w.WriteHeader(500)
+		response["status"] = "Error creating user"
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+	err = json.Unmarshal(body, &userReq)
+	if err != nil {
+		w.WriteHeader(400)
+		response["status"] = "Error parsing JSON"
+		json.NewEncoder(w).Encode(response)
+		log.Println(string(body), userReq)
+		return
+	}
+	newUser := userReqToUser(userReq)
+	status := dbUserCreate(newUser)
+	if status != "success" {
+		w.WriteHeader(500)
+		response["status"] = "Error creating user"
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+	response["status"] = "success"
+	json.NewEncoder(w).Encode(response)
+	return
+}
 
 func createNote(w http.ResponseWriter, r *http.Request) {
 	/*
@@ -263,7 +255,7 @@ func createNote(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(response)
 		return
 	}
-	user, status := dbVerifyToken(token.Value)
+	user, status := dbUserVerifyToken(token.Value)
 	if status != "success" { //the user must be authenticated
 		w.WriteHeader(401)
 		response["status"] = "Unauthenticated"
@@ -280,13 +272,14 @@ func createNote(w http.ResponseWriter, r *http.Request) {
 	var note Note
 	err = json.Unmarshal(body, &note)
 	note.UserID = user.UserID
-	note.NoteID = dbNextNoteID()
-	dbCreateNote(note)
+	note.NoteID = dbNoteNextID()
+	dbNoteCreate(note)
 
 	response["status"] = "Successfully created note"
 	json.NewEncoder(w).Encode(response)
 	return
 }
+
 func listNotesForUser(w http.ResponseWriter, r *http.Request) {
 	//determine what user by token
 	token, err := r.Cookie("SessionToken")
@@ -295,25 +288,29 @@ func listNotesForUser(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(401) //No cookie, no auth
 		return
 	}
-	user, status := dbVerifyToken(token.Value)
+	user, status := dbUserVerifyToken(token.Value)
 	if status != "success" {
 		w.WriteHeader(401)
 	}
-	notes, status := dbGetNotesByUserID(user.UserID)
+	notes, status := dbNoteGetAllByUserID(user.UserID)
 	if status != "success" {
 		w.WriteHeader(500)
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(notes)
 }
+
 func readNote(w http.ResponseWriter, r *http.Request) { //Note by ID
 	//check perms for the user, notes are private
 	//then check noteid
 	//then write it as JSON to w.
+	return
 }
+
 func updateNote(w http.ResponseWriter, r *http.Request) {
 	return
 }
+
 func deleteNote(w http.ResponseWriter, r *http.Request) {
 	return
 }
@@ -323,7 +320,7 @@ func deleteNote(w http.ResponseWriter, r *http.Request) {
 func dbNextUserID() int {
 	res, err := database.Query("SELECT Max(UserID) FROM User")
 	if err != nil {
-		if res !=  nil {
+		if res != nil {
 			res.Close()
 		}
 		log.Println(err.Error())
@@ -344,8 +341,9 @@ func dbNextUserID() int {
 	res.Close()
 	return UserID + 1
 }
-func dbCreateUser(user User) (status string) {
-	statement, err := database.Prepare("INSERT INTO User(UserID, Username, HashedPassword, Salt, SessionToken) values(?,?,?,?,?,?)")
+
+func dbUserCreate(user User) (status string) {
+	statement, err := database.Prepare("INSERT INTO User(UserID, Username, HashedPassword, Salt, SessionToken) values(?,?,?,?,?)")
 	if err != nil {
 		log.Println(err.Error())
 		return "DB statement preperation failed"
@@ -363,7 +361,7 @@ func dbCreateUser(user User) (status string) {
 	return "success"
 }
 
-func dbSetToken(token string, userID int) string {
+func dbUserSetToken(token string, userID int) string {
 	statement, err := database.Prepare("UPDATE User SET SessionToken = ? WHERE UserID = ?")
 	if err != nil {
 		log.Println(err.Error())
@@ -378,7 +376,22 @@ func dbSetToken(token string, userID int) string {
 	return "success"
 }
 
-func dbVerifyToken(token string) (User, string) {
+func dbUserSetPassword(token string, userID int) string {
+	statement, err := database.Prepare("UPDATE User SET SessionToken = ? WHERE UserID = ?")
+	if err != nil {
+		log.Println(err.Error())
+		return "DB statement preperation failed"
+	}
+	_, err = statement.Exec(token, userID)
+	if err != nil {
+		log.Println(err.Error())
+		return "DB execution failed"
+	}
+
+	return "success"
+}
+
+func dbUserVerifyToken(token string) (User, string) {
 	//Lookup by Token
 	if token == "" {
 		return User{}, "nil token"
@@ -397,12 +410,12 @@ func dbVerifyToken(token string) (User, string) {
 	var user User
 	for res.Next() { //Technically Identical UIDs will give the last
 		var (
-			UserID         int
-			Username       string
-			Realname       string
+			UserID       int
+			Username     string
+			Realname     string
 			PasswordHash string
-			Salt           string
-			SessionToken   string
+			Salt         string
+			SessionToken string
 		)
 
 		err = res.Scan(&UserID, &Username, &Realname, &PasswordHash, &Salt, &SessionToken)
@@ -412,11 +425,11 @@ func dbVerifyToken(token string) (User, string) {
 			return User{}, "DB query reading failed"
 		}
 		user = User{
-			UserID:         UserID,
-			Username:       Username,
+			UserID:       UserID,
+			Username:     Username,
 			PasswordHash: PasswordHash,
-			Salt:           Salt,
-			SessionToken:   SessionToken,
+			Salt:         Salt,
+			SessionToken: SessionToken,
 		}
 	}
 	if user.UserID == 0 {
@@ -426,7 +439,7 @@ func dbVerifyToken(token string) (User, string) {
 	return user, "success"
 }
 
-func dbGetUserByUsername(username string) (User, string) {
+func dbUserGetByUsername(username string) (User, string) {
 	statement, err := database.Prepare("SELECT * FROM User WHERE Username = ?")
 	if err != nil {
 		log.Println(err.Error())
@@ -441,12 +454,12 @@ func dbGetUserByUsername(username string) (User, string) {
 	var user User
 	for res.Next() { //Technically Identical Usernames will give the last
 		var (
-			UserID         int
-			Username       string
-			Realname       string
+			UserID       int
+			Username     string
+			Realname     string
 			PasswordHash string
-			Salt           string
-			SessionToken   string
+			Salt         string
+			SessionToken string
 		)
 
 		err = res.Scan(&UserID, &Username, &Realname, &PasswordHash, &Salt, &SessionToken)
@@ -456,11 +469,11 @@ func dbGetUserByUsername(username string) (User, string) {
 			return User{}, "DB query reading failed"
 		}
 		user = User{
-			UserID:         UserID,
-			Username:       Username,
+			UserID:       UserID,
+			Username:     Username,
 			PasswordHash: PasswordHash,
-			Salt:           Salt,
-			SessionToken:   SessionToken,
+			Salt:         Salt,
+			SessionToken: SessionToken,
 		}
 	}
 	if user.UserID == 0 {
@@ -471,7 +484,7 @@ func dbGetUserByUsername(username string) (User, string) {
 }
 
 /*Note Database Functions*/
-func dbNextNoteID() int {
+func dbNoteNextID() int {
 	res, err := database.Query("SELECT Max(NoteID) FROM Note")
 	if err != nil {
 		log.Println(err.Error())
@@ -493,7 +506,7 @@ func dbNextNoteID() int {
 	return NoteID + 1
 }
 
-func dbCreateNote(note Note) string {
+func dbNoteCreate(note Note) string {
 	statement, err := database.Prepare(
 		"INSERT INTO Note(NoteID, UserID, NoteTitle, NoteContent) values(?,?,?,?)")
 	if err != nil {
@@ -512,7 +525,7 @@ func dbCreateNote(note Note) string {
 	return "success"
 }
 
-func dbGetNotes() ([]Note, string) {
+func dbNoteGetAll() ([]Note, string) {
 	var noteList []Note
 	res, err := database.Query("SELECT * FROM Note")
 	if err != nil {
@@ -545,7 +558,7 @@ func dbGetNotes() ([]Note, string) {
 	return noteList, "success"
 }
 
-func dbGetNoteByNoteID(id int) (Note, string) {
+func dbNoteGetByNoteID(id int) (Note, string) {
 	statement, err := database.Prepare("SELECT * FROM Note WHERE NoteID = ?")
 	if err != nil {
 		log.Println(err.Error())
@@ -581,7 +594,7 @@ func dbGetNoteByNoteID(id int) (Note, string) {
 	return note, "success"
 }
 
-func dbGetNotesByUserID(id int) ([]Note, string) {
+func dbNoteGetAllByUserID(id int) ([]Note, string) {
 	statement, err := database.Prepare("SELECT * FROM Note WHERE UserID = ?")
 	if err != nil {
 		log.Println(err.Error())
