@@ -1,4 +1,8 @@
 function onLoginLoad() {
+    const token = Cookies.get("SessionToken");
+    if (token !== undefined && token !== "") {
+        window.location = "/mynotes"
+    }
     document.querySelector("#loginForm").addEventListener("submit", function (event) {
         //on pressing enter
         event.preventDefault()
@@ -23,6 +27,6 @@ async function login() {
     } else {
         Cookies.set("SessionToken",statusOrCookie)
         console.log(statusOrCookie)
-        //window.location = "/mynotes"
+        window.location = "/mynotes"
     }
 }

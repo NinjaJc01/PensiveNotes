@@ -17,6 +17,15 @@ function setDark() {
     });
 }
 
+function themeSwap() {
+    const theme = window.sessionStorage.getItem("theme")
+    if (theme === "light") {
+        setDark()
+        return
+    }
+    setLight()
+}
+
 function themeOnload() {
     const theme = window.sessionStorage.getItem("theme")
     if (theme === "light") {

@@ -16,6 +16,11 @@ function addNote(note) {
     }
 }
 
+function logout() {
+    postJsonData("/api/user/logout", "");
+    window.location = "/";
+}
+
 async function postJsonData(url = '', data = {}) {
     // Default options are marked with *
     const response = await fetch(url, {
@@ -35,13 +40,16 @@ async function postJsonData(url = '', data = {}) {
 async function createNote() {
     const title = document.querySelector("#Title").value;
     const content = document.querySelector("#Content").value;
-    console.log(title,content)
-    const response = await postJsonData("/api/note/new", { noteTitle: title, noteContent: content });
+    console.log(title, content)
+    postJsonData("/api/note/new", { noteTitle: title, noteContent: content }).then(function () {
+        document.querySelector("#notesDiv").innerHTML = "";
+        getNotes();
+    })
     document.querySelector("#Title").value = "";
     document.querySelector("#Content").value = "";
     //delete notes, reload them
-    document.querySelector("#notesDiv").innerHTML = "";
-    window.setTimeout(await getNotes(), 200);
+    //document.querySelector("#notesDiv").innerHTML = "";
+    //window.setTimeout(await getNotes(), 200);
     cancelNote();
 }
 
@@ -60,6 +68,12 @@ function cancelNote() {
     document.querySelector("#notesForm").classList.remove("visible");
     document.querySelector("#newNote").classList.add("visible");
     document.querySelector("#newNote").classList.remove("invisible");
+}
+function onload() {
+    const token = Cookies.get("SessionToken");
+    if (token === undefined || token === "") {
+        window.location = "/"
+    }
 }
 
 async function getNotes() {

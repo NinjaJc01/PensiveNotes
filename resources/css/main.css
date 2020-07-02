@@ -50,6 +50,7 @@ nav.light {
 
 nav a {
     text-decoration: none;
+    align-items: center;
     color: inherit;
     display: flex;
     justify-content: space-between;
@@ -116,4 +117,7 @@ nav a {
 
 .aboutText {
     margin: 0.25rem 0;
+}
+.loginCol {
+    margin: 1rem auto;
 }
