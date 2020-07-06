@@ -97,7 +97,7 @@ func startServer() {
 	//CRUD API routes
 	userRouter := apiRouter.PathPrefix("/user").Subrouter()
 	/*Create User	*/ userRouter.HandleFunc("/create", createUser).Methods("POST")
-	/*Create User	*/ userRouter.HandleFunc("/changepw", reqHandler).Methods("POST") //TODO implement this
+	/*Change passwd	*/ userRouter.HandleFunc("/changepw", doChangePassword).Methods("POST")
 	/*Log out		*/ userRouter.HandleFunc("/logout", doLogout).Methods("POST")
 	/*Log In		*/ userRouter.HandleFunc("/login", doLogin).Methods("POST")
 	noteRouter := apiRouter.PathPrefix("/note").Subrouter()
@@ -154,6 +154,44 @@ func doLogout(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(500)
 		return
 	}
+}
+
+func doChangePassword(w http.ResponseWriter, r *http.Request) {
+	// body, err := ioutil.ReadAll(r.Body)
+	// if err != nil {
+	// 	log.Println("Couldn't read body")
+	// 	return
+	// }
+	// log.Println(string(body))
+	username := r.FormValue("username")
+	oldPassword := r.FormValue("oldPassword")
+	newPassword := r.FormValue("newPassword")
+	log.Println(username,oldPassword,newPassword)
+	if username == "" || oldPassword == "" || newPassword == "" {
+		w.Write([]byte("Incomplete data"))
+		return
+	}
+	//Verify user and password
+	user, status := dbUserGetByUsername(username)
+	//on success, set cookie and send them to the flag
+	if status != "success" {
+		hashPassword("nottherealpassword", "aSalt")
+		w.Write([]byte("Incorrect credentials"))
+		return //error!
+	}
+	if !verifyPass(user, oldPassword) {
+		w.Write([]byte("Incorrect credentials"))
+		return //error!
+	}
+	user.Salt = generateSalt()
+	user.PasswordHash = hashPassword(newPassword,user.Salt)
+	status = dbUserSetPassword(user.PasswordHash, user.Salt, user.UserID)
+	if status != "success" {
+		w.Write([]byte("An unspecified error occurred"))
+		log.Println(status)
+		return
+	}
+	w.Write([]byte("Successfully changed your password."))
 }
 
 func doLogin(w http.ResponseWriter, r *http.Request) {
@@ -358,13 +396,13 @@ func dbUserSetToken(token string, userID int) string {
 	return "success"
 }
 
-func dbUserSetPassword(newHash string, userID int) string {
-	statement, err := database.Prepare("UPDATE User SET HashedPassword = ? WHERE UserID = ?")
+func dbUserSetPassword(newHash string, newSalt string, userID int) string {
+	statement, err := database.Prepare("UPDATE User SET HashedPassword = ?, Salt = ? WHERE UserID = ?")
 	if err != nil {
 		log.Println(err.Error())
 		return "DB statement preperation failed"
 	}
-	_, err = statement.Exec(newHash, userID)
+	_, err = statement.Exec(newHash, newSalt, userID)
 	if err != nil {
 		log.Println(err.Error())
 		return "DB execution failed"

@@ -8,14 +8,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" type="text/css" media="screen" href="/css/main.css">
     <link rel="stylesheet" type="text/css" media="screen" href="/css/login.css">
+    <style>
+        .formElem label {
+            width: 15em;
+        }
+    </style>
     <link rel="icon" type="image/svg" href="/img/pensive.svg" />
     <script src="/js/main.js"></script>
     <script src="/js/theme.js"></script>
     <script src="/js/cookie.js"></script>
-    <script src="/js/login.js"></script>
+    <script src="/js/changepw.js"></script>
 </head>
 
-<body class="dark" onload="themeOnload();onLoginLoad()">
+<body class="dark" onload="themeOnload();onPageLoad()">
     <nav class="dark">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
             stroke-linecap="round" stroke-linejoin="round" class="feather feather-pen-tool logo">
@@ -26,25 +31,30 @@
         </svg>
         <h2 class="navTitle"><a href="/">Pensive Notes</a></h2>
         <a href="javascript:themeSwap()">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24px" height="24px"><path d="M24 0H0v24h24z" fill="none"/><path d="M17.66 7.93L12 2.27 6.34 7.93c-3.12 3.12-3.12 8.19 0 11.31C7.9 20.8 9.95 21.58 12 21.58c2.05 0 4.1-.78 5.66-2.34 3.12-3.12 3.12-8.19 0-11.31zM12 19.59c-1.6 0-3.11-.62-4.24-1.76C6.62 16.69 6 15.19 6 13.59s.62-3.11 1.76-4.24L12 5.1v14.49z"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24px" height="24px">
+                <path d="M24 0H0v24h24z" fill="none" />
+                <path
+                    d="M17.66 7.93L12 2.27 6.34 7.93c-3.12 3.12-3.12 8.19 0 11.31C7.9 20.8 9.95 21.58 12 21.58c2.05 0 4.1-.78 5.66-2.34 3.12-3.12 3.12-8.19 0-11.31zM12 19.59c-1.6 0-3.11-.62-4.24-1.76C6.62 16.69 6 15.19 6 13.59s.62-3.11 1.76-4.24L12 5.1v14.49z" />
+            </svg>
             Swap Theme</a>
-        <a href="/changepw">Change Password</a>
+        <a href="/mynotes">My Notes</a>
+        <a href="javascript:logout()">Log Out</a>
     </nav>
-    <div class="bodyFlexContainer content">
-        <div class="column">
-            <h3>Pensive Notes</h3>
-            <h4 class="subtitle">A note taking app for people who like to think about their notes</h4>
-        </div>
+    <div class="bodyFlexContainer">
         <div class="column loginCol">
-            <h3>Log in to Pensive Notes</h3>
+            <h3>Change your password</h3>
             <form id="loginForm">
                 <div class="formElem"><label for="username">Username:</label><input id="username" name="username"
                         required></div>
-                <div class="formElem"><label for="password">Password:</label><input id="password" name="password"
-                        type="password" required></div>
-                <button>Login</button>
+                <div class="formElem"><label for="oldPassword">Current Password:</label><input id="oldPassword"
+                        name="password" type="password" required></div>
+                <div class="formElem"><label for="newPassword1">New Password:</label><input id="newPassword1"
+                        name="password" type="password" required></div>
+                <div class="formElem"><label for="newPassword2">Confirm New Password:</label><input id="newPassword2"
+                        name="password" type="password" required></div>
+                <button>Change My Password</button>
             </form>
-            <div id="loginStatus"></div>
+            <div id="changePwStatus"></div>
         </div>
     </div>
 </body>
